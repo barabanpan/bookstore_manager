@@ -1,0 +1,31 @@
+#signup {
+    width: 550px;
+    height: 330px;
+    margin: 100px auto 50px auto;
+    padding: 20px;
+    position: relative;
+    background: #fff url(data:image/png;base64,iVBORw0K[...]CYII=);
+    border: 1px solid #ccc;
+    border-radius: 3px;  
+}
+
+#signup::before, 
+#signup::after {
+    content: "";
+    position: absolute;
+    bottom: -3px;
+    left: 2px;
+    right: 2px;
+    top: 0;
+    z-index: -1;
+    background: #fff;
+    border: 1px solid #ccc;         
+}
+
+#signup::after {
+    left: 4px;
+    right: 4px;
+    bottom: -5px;
+    z-index: -2;
+    box-shadow: 0 8px 8px -5px rgba(0,0,0,.3);
+}
