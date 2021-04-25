@@ -1,6 +1,7 @@
-# import os
+import os
 # basedir = os.path.abspath(os.path.dirname(__file__))
 # ?
+sqlite_uri = os.path.abspath("app/database/database.db")
 
 
 class Config(object):
@@ -13,7 +14,7 @@ class Config(object):
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///database.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + sqlite_uri   #database/database.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True  # to echo queries to terminal
     #SQLALCHEMY_DATABASE_URL = \

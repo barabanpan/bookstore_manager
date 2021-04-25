@@ -1,4 +1,4 @@
-#signup {
+#signup, #signin {
     width: 550px;
     height: 330px;
     margin: 100px auto 50px auto;
@@ -10,7 +10,7 @@
 }
 
 #signup::before, 
-#signup::after {
+#signup::after, #signin:before, #signin:after {
     content: "";
     position: absolute;
     bottom: -3px;
@@ -22,7 +22,7 @@
     border: 1px solid #ccc;         
 }
 
-#signup::after {
+#signup::after, #signin:after {
     left: 4px;
     right: 4px;
     bottom: -5px;

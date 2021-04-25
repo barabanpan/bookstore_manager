@@ -2,24 +2,32 @@
 <html>
   <head>
     {% block head %}
-    <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="static/css/styles.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <title>{% block title %}{% endblock %} - My Webpage</title>
+    <title>{% block title %}{% endblock %} - My Bookstore</title>
     {% endblock %}
   </head>
   <body>
     <nav class="navbar navbar-default">
       <div class="container-fluid">
-        <ul class="nav navbar-nav">
+        <ul class="nav navbar-nav mr-auto">
           <li {% block isactive_home %} {% endblock %}><a href="{{ url_for('index') }}">Home</a></li>
           <li {% block isactive_books %} {% endblock %}><a href="{{ url_for('books') }}">Books</a></li>
-          <li {% block isactive_sign_up %} {% endblock %}><a href="{{ url_for('sign_up') }}">Sign up</a></li>
-          <li {% block isactive_registration %} {% endblock %}><a href="{{ url_for('registration') }}">Registration</a></li>
+        </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+          {% if welcome_user %}
+              <li> {% block welcome_user %}{% endblock %}</li>
+              <li {% block isactive_sign_out %} {% endblock %}><a href="{{ url_for('sign_out') }}">Sign out</a></li>
+          {% else %}
+              <li {% block isactive_registration %} {% endblock %}><a href="{{ url_for('registration') }}">Registration</a></li>
+              <li {% block isactive_sign_in %} {% endblock %}><a href="{{ url_for('sign_in') }}">Sign in</a></li>
+          {% endif %}
         </ul>
       </div>
     </nav>

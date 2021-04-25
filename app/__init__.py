@@ -1,29 +1,75 @@
-from flask import Flask, jsonify, render_template
-from flask_sqlalchemy import SQLAlchemy
-from config import DevelopmentConfig
+from flask import Flask, jsonify, render_template, request, session
+from config import DevelopmentConfig as config
+
+from .models.database import db, base
+from .models.user import User
+
+
+def setup_database(app):
+    with app.app_context():
+        @app.before_first_request
+        def create_tables():
+            base.metadata.create_all(db)
 
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(DevelopmentConfig)
+    app.config.from_object(config)
 #    app.wsgi_app = WhiteNoise(app.wsgi_app, root='app/static/')
-    db = SQLAlchemy(app)
+    setup_database(app)
+
+    @app.route('/admin_users')
+    def admin_users():
+        users = User.return_all()
+        return render_template("admin/users.html", data=users)
 
     @app.route('/')
     def index():
-        return render_template("index.html")
+        return render_template("index.html", welcome_user=session.get("email"))
 
     @app.route('/books')
     def books():
-        return render_template("books.html")
+        return render_template("books.html", welcome_user=session.get("email"))
 
-    @app.route('/sign_up')
-    def sign_up():
-        return render_template("sign_up.html")
+    @app.route('/sign_in', methods=['GET', 'POST'])
+    def sign_in():
+        if request.method == "GET":
+            return render_template("sign_in/sign_in.html", welcome_user=session.get("email"))
 
-    @app.route('/registration')
+        else:
+            email = request.form.get("email")
+            password = request.form.get("password")
+            user = User.find_by_email(email)
+            right_pass = User.verify_hash(password, user.hash_password)
+            if right_pass:
+                session["email"] = email
+                return render_template("index.html", welcome_user=session.get("email"))
+            else:
+                session.pop("email", None)
+                return render_template("sign_in/bad_credentials.html", welcome_user=session.get("email"))
+
+    @app.route('/registration', methods=['GET', 'POST'])
     def registration():
-        return render_template("registration.html")
+        if request.method == "GET":
+            return render_template("sign_up/registration.html", welcome_user=session.get("email"))
+
+        else:
+            email = request.form.get("email")
+            password = request.form.get("p1")
+
+            if User.find_by_email(email):
+                return render_template("sign_up/already_exists.html", welcome_user=session.get("email"))
+
+            new_user = User(email, User.generate_hash(password))
+            new_user.save_to_db()
+            session["email"] = email
+            return render_template("sign_up/successful.html", welcome_user=session.get("email"))
+
+    @app.route('/sign_out')
+    def sign_out():
+        session.pop("email", None)
+        return render_template("index.html")
+
         #jsonify({"message": "Hello, World!"})
 
 #    # not happening in main because app is imported to wsgi

@@ -1,37 +1,50 @@
-from .. import db
+from .database import base, session
+from sqlalchemy import Column, String, Integer, DateTime
+from sqlalchemy.orm import load_only
+from passlib.hash import pbkdf2_sha256 as sha256
+from datetime import datetime
 
 
-class User(db.Model):
+class User(base):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer(), primary_key=True)
-    username = db.Column(db.String(255))
-    password = db.Column(db.String(255))
+    id = Column(Integer(), primary_key=True)
+    email = Column(String(255))
+    hash_password = Column(String(255))
+    date_of_registration = Column(DateTime)
 
-    def __init__(self, username):
-        self.username = username
+    def __init__(self, email, hash_password):
+        self.email = email
+        self.hash_password = hash_password
+        self.date_of_registration = datetime.now()
 
     def __repr__(self):
-        return f"<User '{self.username}'>"
+        return f"<User '{self.email}'>"
 
     @classmethod
-    def find_by_username(cls, username):
-        return db.session.query(cls).filter_by(username=username).first()
+    def find_by_email(cls, email):
+        return session.query(cls).filter_by(email=email).first()
 
     @classmethod
     def return_all(cls):
+        fields = ['email', 'date_of_registration']
+        users = session.query(cls).options(load_only(*fields)).all()
+        return users
+
+    @classmethod
+    def return_all_json(cls):
         def to_json(x):
             return {
-                'username': x.username,
-                'password': x.password
+                'email': x.email,
+                'date_of_registration': x.date_of_registration
             }
-        return {'users': list(map(lambda x: to_json(x), db.session.query(cls)))}
+        return {'users': list(map(lambda x: to_json(x), session.query(cls)))}
 
     @classmethod
     def delete_all(cls):
         try:
             # ????????
-            num_rows_deleted = db.session.query(cls).delete()
+            num_rows_deleted = session.query(cls).delete()
             dsession.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
         except Exception:
