@@ -1,4 +1,4 @@
-#Prerequisites
+# Prerequisites
 1. `pip install -r requirements.txt`
 
 2. In root directory create file `config.py`:
@@ -27,5 +27,5 @@ class DevelopmentConfig(Config):
     DEBUG = True
 ```
 
-#Run
+# Run
 1. `python wsgi.py`
