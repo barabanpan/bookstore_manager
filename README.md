@@ -4,6 +4,8 @@
 2. In root directory create file `config.py`:
 ```
 import os
+import datetime
+
 sqlite_uri = os.path.abspath("app/database/database.db")
 
 
@@ -15,6 +17,9 @@ class Config(object):
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + sqlite_uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    PERMANENT = True  # session lives after browser restart
+    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=2)
 
 
 class ProductionConfig(Config):

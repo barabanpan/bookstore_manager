@@ -1,4 +1,5 @@
 import os
+import datetime
 # basedir = os.path.abspath(os.path.dirname(__file__))
 # ?
 sqlite_uri = os.path.abspath("app/database/database.db")
@@ -9,6 +10,9 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True  # ?
     SECRET_KEY = 'aaa'
+
+    PERMANENT = True  # session lives after browser restart
+    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=2)
 
     JWT_SECRET_KEY = 'jwt-secret-key'
     JWT_BLACKLIST_ENABLED = True
