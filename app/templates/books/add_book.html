@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %} Registration {% endblock %}
+{% block isactive_registration %} class="active" {% endblock %}
+{% block welcome_user %} {% if welcome_user %} {{ welcome_user }} {% endif %} {% endblock %}
+
+
+{% block content %}
+<div class="container h-100">
+    <div class="justify-content-center align-items-center">
+        <div class="col-10 col-md-8 col-lg-6">
+			<form id="addbook" action="/books/add" method="POST">
+			    <h1>Add a new book:</h1>
+			    <input name="title" type="title" placeholder="Title" required=""><br>
+			    <input type="author" placeholder="Author" required="" name="author"><br>
+			    <input type="year" placeholder="Year" required="" name="year"><br>
+			    <input type="description" placeholder="Description" required="" name="description"><br><br>                  
+			    <button type="submit">Add book</button>    
+			</form>
+		</div>
+	</div>
+</div>
+{% endblock %}
