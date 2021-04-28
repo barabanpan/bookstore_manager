@@ -45,5 +45,20 @@ def update_book():
 
     book = BookModel.find_by_id(id_)
     book.update(title, author, year, description)
-    ## somehow update
+
     return redirect("/books/")
+
+
+@books_bp.route("/delete")
+def delete_book():
+    answer = request.args.get("answer")
+    id_ = request.args.get("id")
+    if not answer:
+        book = BookModel.find_by_id(id_)
+        return render_template("books/delete_book.html", book=book, welcome_user=session.get("email"))
+
+    if answer == "yes":
+        BookModel.delete_by_id(id_)
+        return redirect("/books/")
+    elif answer == "cancel":
+        return redirect("/books/")

@@ -39,8 +39,12 @@ class BookModel(base):
         self.description = description
         session.commit()
 
- ## update one!!!
- ## delete one!!!
+    @classmethod
+    def delete_by_id(cls, id):
+        book = BookModel.find_by_id(id)
+        session.delete(book)
+        session.commit()
+
     @classmethod
     def delete_all(cls):
         try:
