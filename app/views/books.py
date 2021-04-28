@@ -1,5 +1,5 @@
 from flask.blueprints import Blueprint
-from flask import render_template, session, request
+from flask import render_template, session, request, redirect
 
 from app.models.book_model import BookModel
 
@@ -27,7 +27,7 @@ def add_book():
     new_book = BookModel(title, author, year, description)
     new_book.save_to_db()
 
-    return render_template("books/books.html", welcome_user=session.get("email"))
+    return redirect("/books/")
 
 
 @books_bp.route("/update", methods=['GET', 'POST'])
@@ -46,4 +46,4 @@ def update_book():
     book = BookModel.find_by_id(id_)
     book.update(title, author, year, description)
     ## somehow update
-    return render_template("books/books.html", welcome_user=session.get("email"))
+    return redirect("/books/")
