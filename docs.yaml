@@ -1,0 +1,468 @@
+openapi: 3.0.0
+info:
+  title: BookstoreManagerAPI 
+  description: API description
+  version: 1.0.0
+servers:
+  - url: 'http://127.0.0.1:5000/'
+tags:
+  - name: Admin - managers
+  - name: Auth
+  - name: Book
+paths:
+  /admin/managers:
+    get:
+      tags:
+        - Admin - managers
+      summary: Get all managers
+      description: Operation requires authorization header (Bearer). </br> User must belong to a 'reader' group. </br> Otherwise response will be 403 'Forbidden'.
+      responses:
+        '200': 
+          description:  Successful Operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: List of managers
+              example:
+                 - id: manager's id
+                   name: Donny
+                   email: donny@example.com
+                   date_of_registration: Sun, 25 Apr 2021 14:08:45 GMT
+        '401':
+          description: Authorization header is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+        '403':
+          description: Access to the requested resource is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_403'
+      #security:
+      #  - bearerAuth: []
+                
+  /auth/sign_up:
+    post:
+      tags:
+        - Auth
+      summary: "Sign up"
+      requestBody:
+        required: true
+        description: |
+          Creates a new manager if there is no manager with the same email. </br> 
+          Takes email, name and password as a request body.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/sign_up'
+            examples:
+              'Valid sign up':
+                description: |
+                  Creates a manager with these email, name and password and sends a verification letter to this email.
+                value:
+                  email: tom.bayley@example.com
+                  name: Tom Bayley
+                  password: SomeGoodPass1234
+      responses:
+        '200': 
+          description: Successful sign up
+          content:
+            application/json:
+              example:
+                message: "New manager signed up."
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                Account already exists:
+                  value:
+                    message: 'An account with the given email already exists.'
+                Missing property:
+                  value: 
+                    message: "email', 'name', password' are required"
+                Bad request body:
+                  value:
+                    message: "No json data provided."
+  /auth/sign_in:
+    get:
+      tags:
+        - Auth
+      summary: 'Get access and refresh tokens'
+      description: |
+        Operation requires authorization header (Basic email:password)
+      responses:
+        "200":
+          description: Successful Operation
+            Returns `AccessToken`, `ExpiresIn`, `RefreshToken`, and `TokenType`.
+          content:
+            application/json:
+              example: 
+                AccessToken: some.long.string
+                ExpiresIn: 3600
+                RefreshToken: other.long.string
+                TokenType: Bearer
+        '401':
+          description: Authorization header is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+      security:
+        - basicAuth: []
+        
+  /auth/refresh:
+    get:
+      tags:
+        - Auth
+      summary: "Refresh access token"
+      description: |
+        Operation requires authorization header (Bearer) with `RefreshToken` from `SignIn` response
+      responses:
+        "200":
+          description: Successful Operation
+            Returns new `AccessToken`, `ExpiresIn` and `TokenType`.
+          content:
+            application/json:
+              example: 
+                AccessToken: some.long.string
+                ExpiresIn: 3600
+                TokenType: Bearer
+        '401':
+          description: Authorization header is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+      security:
+        - bearerAuth: []
+    
+  /books/get_all:
+    post: 
+      tags:
+        - Book
+      summary: Get all books
+      requestBody:
+        required: true
+        description: |
+          __Table 1.__  Request body structure:
+            | Field | Description |
+            | ------- | -------- |
+            | `page*` | Required integer. Page for pagination. |
+            | `limit*`| Required integer. Amount of books per page. |
+            | `title` | String. Allows to search in titles. |
+            | `author` | String. Allows to search in authors. |
+        content:
+          application/json:
+              schema:
+                $ref: '#/components/schemas/get_books'
+              example:
+                 page: 1
+                 limit: 3
+                 title: Harry
+      responses:
+        '200': 
+          description:  Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/book'
+              example:
+                books:
+                  - title: Harry Potter
+                    author: J. K. Rowling
+                    id: 1
+                    year: 1998
+                    price: 9
+                    quantity: 50
+                    description: Book about boy who lived.
+  /books:
+    post:
+      tags:
+        - Book
+      summary: Add a new book
+      description: "Operation requires authorization header (Bearer). </br> User must belong to a 'modifier' group. </br> Otherwise response will be 403 'Forbidden'."
+      requestBody:
+        required: true
+        description: |
+          Creates a new entity.</br> </br>
+          __Table 1.__  Request body structure:
+            | Field | Description |
+            | ------- | -------- |
+            | `title*` | Required. Book's title. |
+            | `author*`| Required. Book's author. |
+            | `year*` | Required. Publishing year. |
+            | `price*` | Required numeric, minimum value is 0. |
+            | `quantity*` | Required numeric, amount of books left. |
+            | `description` | Book's description. |
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/book'
+            example:  
+              - title: Harry Potter
+                author: J. K. Rowling
+                year: 1998
+                price: 9
+                quantity: 50
+                description: Book about boy who lived.
+      responses:
+        '201': 
+          description: Successful Operation
+          content:
+            application/json:
+              example:
+                id: 5
+        '400': 
+          description: Bad Request
+          content:
+            application/json:
+              example:
+                email: "'title', 'author', 'year', 'price', 'quantity' are required"
+        '401':
+          description: Authorization header is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+        '403':
+          description: Access to the requested resource is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_403'
+      #security:
+      #  - bearerAuth: []
+  
+  /books/{id}:
+    get: 
+      tags:
+        - Book
+      summary: Get one entity by username
+      description: "Operation requires authorization header (Bearer). </br> User must belong to a 'reader' group. </br> Otherwise response will be 403 'Forbidden'."
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Book's id
+      responses:
+        '200': 
+          description: |
+            Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/book'
+              example:
+                - title: Harry Potter
+                  author: J. K. Rowling
+                  year: 1998
+                  price: 9
+                  quantity: 50
+                  description: Book about boy who lived.
+        '404':
+          description: Book with given id was not found.
+          content: 
+            application/json:
+              example:
+                message: No such book.
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - Book
+      summary: Update one book
+      description: "Operation requires authorization header (Bearer). </br> User must belong to a 'modifier' group. </br> Otherwise response will be 403 'Forbidden'."
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Book's id
+      requestBody:
+        required: true
+        description: |
+          Updates an existing book.</br> </br>
+          __Table 2.__  Request body structure:
+            | Field | Description |
+            | ------- | -------- |
+            | `title` | Book's title. |
+            | `autho*`| Book's author. |
+            | `year` | Publishing year. |
+            | `price` | Book's price, minimum value is 0. |
+            | `quantity` | Amount of books left. |
+            | `description` | Book's description. |
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/book'
+            example:
+              - price: 6
+                quantity: 49
+      responses:
+        '200': 
+          description: Successful Update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/book'
+              example:
+                id: 4
+                title: Harry Potter
+                author: J. K. Rowling
+                year: 1998
+                price: 6
+                quantity: 49
+                description: Book about boy who lived.
+        '401':
+          description: Authorization header is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+        '403':
+          description: Access to the requested resource is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_403'
+      security:
+        - bearerAuth: []
+        
+    delete:  
+      tags:
+        - Book
+      summary: Delete one entity
+      description: "Operation requires authorization header (Bearer). </br> User must belong to a 'modifier' group. </br> Otherwise response will be 403 'Forbidden'.
+      </br></br>Deletion changes `is_active` to false, but does not delete entity from database completely."
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Book's id
+      responses:
+        '204': 
+          description: Successful Deletion
+          content:
+            application/json:
+              example:
+                message: Deleted.
+        '401':
+          description: Authorization header is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+        '403':
+          description: Access to the requested resource is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_403'
+        '404':
+          description: Book with given id was not found.
+          content: 
+            application/json:
+              example:
+                message: No such book.
+      security:
+        - bearerAuth: []
+  
+components:
+  schemas:
+    'sign_up':
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+
+    'get_books':
+      type: object
+      additionalProperties: false
+      required:
+        - page
+        - title
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+        author:
+          type: string
+          minLength: 1
+              
+    'book':
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - author
+        - year
+        - price
+        - quantity
+      properties:
+        title:
+          type: string
+          minLength: 1
+        author:
+          type: string
+          minLength: 1
+        year:
+          type: integer
+        price:
+          type: integer
+          minimum: 0
+        quantity:
+          type: integer
+          minimum: 0
+        description:
+          type: string
+          
+    'response_401':
+      type: object
+      properties:
+        message:
+          type: string
+          example:
+            "Unauthorized"
+            
+    'response_403':
+      type: object
+      properties:
+        message:
+          type: string
+          example:
+            "Forbidden"
+          
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 

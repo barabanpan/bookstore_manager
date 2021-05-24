@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session
+from flask import Flask, jsonify, session, request
 from config import DevelopmentConfig as config
 
 from .models.database import db, base
@@ -11,6 +11,16 @@ def setup_database(app):
             base.metadata.create_all(db)
 
 
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    if request.method == 'OPTIONS':
+        response.headers['Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
+        headers = request.headers.get('Access-Control-Request-Headers')
+        if headers:
+            response.headers['Access-Control-Allow-Headers'] = headers
+    return response
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(config)
@@ -19,7 +29,7 @@ def create_app():
 
     @app.route('/')
     def index():
-        return render_template("index.html", welcome_user=session.get("email"))
+        return jsonify({"message": "Index:)"})
 
     # registering blueprints. Do that AFTER setup_database()
     from .views.admin import admin_bp
@@ -28,7 +38,10 @@ def create_app():
     from .views.books import books_bp
     app.register_blueprint(books_bp)
 
-    from .views.sign_up_sign_in import sign_up_sign_in_bp
-    app.register_blueprint(sign_up_sign_in_bp)
+    from .views.auth import auth_bp
+    app.register_blueprint(auth_bp)
+
+    # enable CORS
+    app.after_request(add_cors_headers)
 
     return app

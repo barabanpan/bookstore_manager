@@ -1,5 +1,18 @@
 from .database import base, session
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Float
+from paginate_sqlalchemy import SqlalchemyOrmPage
+
+
+def to_json(x):
+    return {
+        'id': x.id,
+        'title': x.title,
+        'author': x.author,
+        'year': x.year,
+        'price': x.price,
+        'quantity': x.quantity,
+        'description': x.description
+    }
 
 
 class BookModel(base):
@@ -9,20 +22,29 @@ class BookModel(base):
     title = Column(String(255))
     author = Column(String(255))
     year = Column(Integer())
+    price = Column(Float())
+    quantity = Column(Integer())
     description = Column(String(1000))
 
-    def __init__(self, title, author, year, description=""):
+    def __init__(self, title, author, year, price, quantity, description=""):
         self.title = title
         self.author = author
         self.year = year
+        self.price = price
+        self.quantity = quantity
         self.description = description
 
     def __repr__(self):
         return f"<Book '{self.title}' of {self.author} >"
 
     @classmethod
-    def find_by_title(cls, title):
-        return session.query(cls).filter_by(title=title).first()
+    def find_by_title_and_author(cls, title, author, page, limit):
+        books = session.query(cls).filter(
+            BookModel.title.like(f"%{title}%")).filter(
+            BookModel.author.like(f"%{author}%"))
+        if books:
+            books = SqlalchemyOrmPage(books, page, limit).items
+        return {"books": list(map(lambda x: to_json(x), books))}
 
     @classmethod
     def find_by_id(cls, id):
@@ -32,11 +54,23 @@ class BookModel(base):
     def return_all(cls):
         return session.query(cls)
 
-    def update(self, title, author, year, description):
-        self.title = title
-        self.author = author
-        self.year = year
-        self.description = description
+    @classmethod
+    def return_all_json(cls):
+        return {"books": list(map(lambda x: to_json(x), session.query(cls)))}
+
+    def update(self, title, author, year, price, quantity, description):
+        if title:
+            self.title = title
+        if author:
+            self.author = author
+        if year:
+            self.year = year
+        if price:
+            self.price = price
+        if quantity:
+            self.quantity = quantity
+        if description:
+            self.description = description
         session.commit()
 
     @classmethod

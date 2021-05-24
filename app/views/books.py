@@ -1,64 +1,80 @@
 from flask.blueprints import Blueprint
 from flask import render_template, session, request, redirect
 
-from app.models.book_model import BookModel
+from app.models.book_model import BookModel, to_json
 
 
 books_bp = Blueprint('books', __name__, url_prefix="/books")
 
 
-@books_bp.route("/")
-def books():
-    books = BookModel.return_all()
-    return render_template("books/books.html", books=books, 
-                           welcome_user=session.get("email"))
+def required_error(required_list):
+    return ", ".join(r for r in required_list) + " are required", 400
 
 
-@books_bp.route("/add", methods=['GET', 'POST'])
+@books_bp.route("/get_all", methods=["POST"])
+def get_books():
+    required = ["page", "limit"]
+
+    if not request.json:
+        return required_error(required)
+    page = request.json.get("page")
+    limit = request.json.get("limit")
+    title = request.json.get("title", "")
+    author = request.json.get("author", "")
+    if not page or not limit:
+        return required_error(required)
+
+    books = BookModel.find_by_title_and_author(title, author, page, limit)
+    return books
+
+
+@books_bp.route("/<id>", methods=["GET"])
+def get_book(id):
+    new_book = BookModel.find_by_id(id)
+    if not new_book:
+        return {"message": "No such book."}, 404
+    return to_json(new_book), 200
+
+
+@books_bp.route("/", methods=["POST"])
 def add_book():
-    if request.method == "GET":
-        return render_template("books/add_book.html", welcome_user=session.get("email"))
+    required = ["title", "author", "year", "price", "quantity"]
 
-    title = request.form.get("title")
-    author = request.form.get("author")
-    year = request.form.get("year")
-    description = request.form.get("description")
+    if not request.json:
+        return required_error(required)
+    title = request.json.get("title")
+    author = request.json.get("author")
+    year = request.json.get("year")
+    price = request.json.get("price")
+    quantity = request.json.get("quantity")
+    description = request.json.get("description", "")
+    if not (title and author and year and price and quantity):
+        return required_error(required)
 
-    new_book = BookModel(title, author, year, description)
+    new_book = BookModel(title, author, year, price, quantity, description)
     new_book.save_to_db()
-
-    return redirect("/books/")
-
-
-@books_bp.route("/update", methods=['GET', 'POST'])
-def update_book():
-    if request.method == "GET":
-       id_ = request.args.get("id")
-       book = BookModel.find_by_id(id_)
-       return render_template("books/update_book.html", book=book, welcome_user=session.get("email"))
-
-    id_ = request.form.get("id")
-    title = request.form.get("title")
-    author = request.form.get("author")
-    year = request.form.get("year")
-    description = request.form.get("description")
-
-    book = BookModel.find_by_id(id_)
-    book.update(title, author, year, description)
-
-    return redirect("/books/")
+    return {"id": str(new_book.id)}, 200
 
 
-@books_bp.route("/delete")
-def delete_book():
-    answer = request.args.get("answer")
-    id_ = request.args.get("id")
-    if not answer:
-        book = BookModel.find_by_id(id_)
-        return render_template("books/delete_book.html", book=book, welcome_user=session.get("email"))
+@books_bp.route("/<id>", methods=["PUT"])
+def update_book(id):
+    title = request.json.get("title")
+    author = request.json.get("author")
+    year = request.json.get("year")
+    price = request.json.get("price")
+    quantity = request.json.get("quantity")
+    description = request.json.get("description")
 
-    if answer == "yes":
-        BookModel.delete_by_id(id_)
-        return redirect("/books/")
-    elif answer == "cancel":
-        return redirect("/books/")
+    book = BookModel.find_by_id(id)
+    book.update(title, author, year, price, quantity, description)
+
+    return to_json(book)
+
+
+@books_bp.route("/<id>", methods=["DELETE"])
+def delete_book(id):
+    book = BookModel.find_by_id(id)
+    if not book:
+        return "No such book", 404
+    BookModel.delete_by_id(id)
+    return {"message": "Deleted."}, 204

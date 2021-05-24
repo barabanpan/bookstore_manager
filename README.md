@@ -33,4 +33,5 @@ class DevelopmentConfig(Config):
 ```
 
 # Run
-1. `python wsgi.py`
+1. `python wsgi.py` 
+or `gunicorn --bind 0.0.0.0:5000 application:app`

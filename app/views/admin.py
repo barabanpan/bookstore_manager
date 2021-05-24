@@ -1,18 +1,14 @@
 from flask.blueprints import Blueprint
 from flask import render_template
 
-from app.models.user_model import UserModel
+from app.models.manager_model import ManagerModel
 
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='templates')
 
 
-@admin_bp.route("users")
-def users():
+@admin_bp.route("managers")
+def managers():
     """For viewing list of users."""
-    try:
-        users = UserModel.return_all()
-    except Exception as e:
-        return {"message": "Something else went wrong while creating: " + repr(e)}, 500
-
-    return render_template("admin/users.html", data=users)
+    managers = ManagerModel.return_all_json()
+    return managers

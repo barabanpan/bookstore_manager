@@ -5,21 +5,23 @@ from passlib.hash import pbkdf2_sha256 as sha256
 from datetime import datetime
 
 
-class UserModel(base):
-    __tablename__ = 'users'
+class ManagerModel(base):
+    __tablename__ = 'managers'
 
     id = Column(Integer(), primary_key=True)
     email = Column(String(255))
+    name = Column(String(255))
     hash_password = Column(String(255))
     date_of_registration = Column(DateTime)
 
-    def __init__(self, email, hash_password):
+    def __init__(self, email, name, hash_password):
         self.email = email
+        self.name = name
         self.hash_password = hash_password
         self.date_of_registration = datetime.now()
 
     def __repr__(self):
-        return f"<User '{self.email}'>"
+        return f"<Manager '{self.name}'>"
 
     @classmethod
     def find_by_email(cls, email):
@@ -27,25 +29,26 @@ class UserModel(base):
 
     @classmethod
     def return_all(cls):
-        fields = ['email', 'date_of_registration']
-        users = session.query(cls).options(load_only(*fields)).all()
-        return users
+        fields = ['email', 'name', 'date_of_registration']
+        managers = session.query(cls).options(load_only(*fields)).all()
+        return managers
 
     @classmethod
     def return_all_json(cls):
         def to_json(x):
             return {
+                'id': x.id,
                 'email': x.email,
+                'name': x.name,
                 'date_of_registration': x.date_of_registration
             }
-        return {'users': list(map(lambda x: to_json(x), session.query(cls)))}
+        return {'managers': list(map(lambda x: to_json(x), session.query(cls)))}
 
     @classmethod
     def delete_all(cls):
         try:
-            # ????????
             num_rows_deleted = session.query(cls).delete()
-            dsession.commit()
+            session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
         except Exception:
             return {'message': 'Something went wrong while deleting all'}
