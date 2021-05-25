@@ -1,8 +1,11 @@
 from flask.blueprints import Blueprint
-from flask import render_template, request, session
+from flask import request
+from flask_jwt_extended import (create_access_token, create_refresh_token,
+    jwt_required, get_jwt_identity, get_jwt)
 import base64
 
 from app.models.manager_model import ManagerModel
+from app.models.revoked_token_model import RevokedTokenModel
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -24,10 +27,15 @@ def sign_in():
         return "Unauthorized", 401
     right_pass = ManagerModel.verify_hash(password, manager.hash_password)
     if right_pass:
-        session["email"] = email
-        return "ok", 200  # повернути 2 токени
+        access_token = create_access_token(identity=email)
+        refresh_token = create_refresh_token(identity=email)
+        return {
+            "message": "Logged in as {}".format(email),
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "Bearer"
+        }, 200
     else:
-        session.pop("email", None)
         return "Unauthorized", 401
 
 
@@ -40,33 +48,53 @@ def sign_up():
     password = request.json.get("password")
 
     if ManagerModel.find_by_email(email):
-        return "An account with the given email already exists.", 400 
+        return "An account with the given email already exists.", 400
 
     if not (email and name and password):
         return "'email', 'name' and 'password' are required.", 400
     new_manager = ManagerModel(email, name, ManagerModel.generate_hash(password))
     new_manager.save_to_db()
-    session["email"] = email
-    return "New manager signed up.", 200
+
+    access_token = create_access_token(identity=email)
+    refresh_token = create_refresh_token(identity=email)
+    return {
+        "message": "Logged in as {}".format(email),
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "Bearer"
+    }, 200
 
 
 @auth_bp.route('/refresh')
+@jwt_required(refresh=True)
 def refresh_access_token():
-    # ???
-    session.pop("email", None)
-    # take email from token, get token, expire them
-    return render_template("index.html")
+    email = get_jwt_identity()
+    access_token = create_access_token(identity=email)
+    return {
+        'access_token': access_token,
+        "token_type": "Bearer"
+    }, 200
 
 
-@auth_bp.route('/expire_access')
+@auth_bp.route('/sign_out_access')
+@jwt_required()
 def sign_out_access():
-    session.pop("email", None)
-    # take email from token, get token, expire them
-    return render_template("index.html")
+    jti = get_jwt()['jti']
+    try:
+        revoked_token = RevokedTokenModel(jti=jti)
+        revoked_token.add()
+        return {'message': 'Access token has been revoked'}
+    except Exception:
+        return {"message": "Something went wrong while revoking token"}, 500
 
 
-@auth_bp.route('/expire_refresh')
+@auth_bp.route('/sign_out_refresh')
+@jwt_required(refresh=True)
 def sign_out_refresh():
-    session.pop("email", None)
-    # take email from token, get token, expire them
-    return render_template("index.html")
+    jti = get_jwt()['jti']  # id of a jwt accessing this post method
+    try:
+        revoked_token = RevokedTokenModel(jti=jti)
+        revoked_token.add()
+        return {"message": "Refresh token has been revoked"}, 200
+    except Exception:
+        return {"message": "Something went wrong while revoking token"}, 500

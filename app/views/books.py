@@ -1,5 +1,6 @@
 from flask.blueprints import Blueprint
-from flask import render_template, session, request, redirect
+from flask import request
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from app.models.book_model import BookModel, to_json
 
@@ -37,6 +38,7 @@ def get_book(id):
 
 
 @books_bp.route("/", methods=["POST"])
+@jwt_required()
 def add_book():
     required = ["title", "author", "year", "price", "quantity"]
 
@@ -57,6 +59,7 @@ def add_book():
 
 
 @books_bp.route("/<id>", methods=["PUT"])
+@jwt_required()
 def update_book(id):
     title = request.json.get("title")
     author = request.json.get("author")
@@ -72,9 +75,10 @@ def update_book(id):
 
 
 @books_bp.route("/<id>", methods=["DELETE"])
+@jwt_required()
 def delete_book(id):
     book = BookModel.find_by_id(id)
     if not book:
-        return "No such book", 404
+        return {"message": "No such book"}, 404
     BookModel.delete_by_id(id)
     return {"message": "Deleted."}, 204

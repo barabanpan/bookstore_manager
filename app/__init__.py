@@ -1,7 +1,10 @@
-from flask import Flask, jsonify, session, request
+from flask import Flask, jsonify, request
+from flask_jwt_extended import JWTManager
 from config import DevelopmentConfig as config
 
 from .models.database import db, base
+
+jwt = JWTManager()
 
 
 def setup_database(app):
@@ -9,6 +12,16 @@ def setup_database(app):
         @app.before_first_request
         def create_tables():
             base.metadata.create_all(db)
+
+
+def setup_jwt(app):
+    jwt.init_app(app)
+    from .models.revoked_token_model import RevokedTokenModel
+
+    @jwt.token_in_blocklist_loader
+    def check_if_token_in_blocklist(jwt_header, jwt_payload):
+        jti = jwt_payload['jti']
+        return RevokedTokenModel.is_jti_blacklisted(jti)
 
 
 def add_cors_headers(response):
@@ -24,8 +37,11 @@ def add_cors_headers(response):
 def create_app():
     app = Flask(__name__)
     app.config.from_object(config)
-    #app.wsgi_app = WhiteNoise(app.wsgi_app, root='app/static/')
+
+    # enable CORS
+    app.after_request(add_cors_headers)
     setup_database(app)
+    setup_jwt(app)
 
     @app.route('/')
     def index():
@@ -40,8 +56,5 @@ def create_app():
 
     from .views.auth import auth_bp
     app.register_blueprint(auth_bp)
-
-    # enable CORS
-    app.after_request(add_cors_headers)
 
     return app

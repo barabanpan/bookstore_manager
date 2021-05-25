@@ -99,14 +99,14 @@ paths:
       responses:
         "200":
           description: Successful Operation
-            Returns `AccessToken`, `ExpiresIn`, `RefreshToken`, and `TokenType`.
+            Returns `access_token`, `refresh_token`, and `token_type`.
           content:
             application/json:
-              example: 
-                AccessToken: some.long.string
-                ExpiresIn: 3600
-                RefreshToken: other.long.string
-                TokenType: Bearer
+              example:
+                message: Logged in as <email>
+                access_token: some.long.string
+                refresh_token: other.long.string
+                token_type: Bearer
         '401':
           description: Authorization header is missing or invalid.
           content:
@@ -122,25 +122,98 @@ paths:
         - Auth
       summary: "Refresh access token"
       description: |
-        Operation requires authorization header (Bearer) with `RefreshToken` from `SignIn` response
+        Operation requires authorization header (Bearer) with `refresh_token` from `sign_in` response
       responses:
         "200":
           description: Successful Operation
-            Returns new `AccessToken`, `ExpiresIn` and `TokenType`.
+            Returns new `access_token`, and `token_type`.
           content:
             application/json:
               example: 
-                AccessToken: some.long.string
-                ExpiresIn: 3600
-                TokenType: Bearer
+                access_token: some.long.string
+                token_type: Bearer
         '401':
           description: Authorization header is missing or invalid.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/response_401'
+        '422':
+          description: Authorization header is invalid (Unprocessable entity).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: Not enough segments
       security:
         - bearerAuth: []
+  /auth/sign_out_access:
+    get:
+      tags:
+        - Auth
+      summary: "Revoke access token"
+      description: |
+        Operation requires authorization header (Bearer) with `access_token` from `sign_in` response
+      responses:
+        "200":
+          description: Successful Operation
+          content:
+            application/json:
+              example: 
+                message: Access token has been revoked
+        '400':
+          description: Token is already revoked or Missing Authorization Header.
+          content:
+            application/json:
+              example:
+                message: Token has been revoked
+        '422':
+          description: Authorization header is invalid (Unprocessable entity).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: Not enough segments
+      security:
+        - bearerAuth: []   
+  /auth/sign_out_refresh:
+    get:
+      tags:
+        - Auth
+      summary: "Revoke refresh token"
+      description: |
+        Operation requires authorization header (Bearer) with `refresh_token` from `sign_in` response
+      responses:
+        "200":
+          description: Successful Operation
+          content:
+            application/json:
+              example: 
+                message: Refresh token has been revoked
+        '400':
+          description: Token is already revoked or Missing Authorization Header.
+          content:
+            application/json:
+              example:
+                message: Token has been revoked
+        '422':
+          description: Authorization header is invalid (Unprocessable entity).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: Not enough segments
+      security:
+        - bearerAuth: []      
     
   /books/get_all:
     post: 

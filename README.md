@@ -21,6 +21,10 @@ class Config(object):
     PERMANENT = True  # session lives after browser restart
     PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=2)
 
+    JWT_SECRET_KEY = '{your-very-secret-jwt-secret-key}'
+    JWT_BLACKLIST_ENABLED = True
+    JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
+
 
 class ProductionConfig(Config):
     DEBUG = False
