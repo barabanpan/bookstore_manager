@@ -58,7 +58,7 @@ class BookModel(base):
     def return_all_json(cls):
         return {"books": list(map(lambda x: to_json(x), session.query(cls)))}
 
-    def update(self, title, author, year, price, quantity, description):
+    def update(self, title=None, author=None, year=None, price=None, quantity=None, description=None):
         if title:
             self.title = title
         if author:
