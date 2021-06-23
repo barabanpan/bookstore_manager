@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager
-from config import DevelopmentConfig as config
+from config import Config as config
 
 from .models.database import db, base
 
