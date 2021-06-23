@@ -83,7 +83,7 @@ class BookModel(base):
     def delete_all(cls):
         try:
             num_rows_deleted = session.query(cls).delete()
-            dsession.commit()
+            session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
         except Exception:
             return {'message': 'Something went wrong while deleting all'}
